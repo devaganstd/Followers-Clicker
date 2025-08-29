@@ -7,11 +7,16 @@ using System.Collections.Generic;
 public class GameState
 {
     public int version = 1;
+    [Header("Statistics")]
     public int followersLifetime; // total followers earned over lifetime
     public int followersTotal; // current available followers
     public long clickCountLifetime;
 
+    [Header("Shop Items")]
+    public List<ShopItemState> shopItems = new List<ShopItemState>();
     public List<Item> items = new();
+    
+    // Active quests
     public List<Quest> quests = new();
 
     // Completition count for scaling quest difficulty
@@ -63,3 +68,15 @@ public enum QuestStatus
     Expired
 }
 
+[Serializable]
+public class ShopItemState
+{
+    public string itemId;
+    public int quantity = 0;
+    
+    public ShopItemState(string id)
+    {
+        itemId = id;
+        quantity = 0;
+    }
+}

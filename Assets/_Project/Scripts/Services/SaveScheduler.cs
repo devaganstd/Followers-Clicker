@@ -1,4 +1,5 @@
 using System;
+using UnityEngine.SceneManagement;
 
 public class SaveScheduler
 {
@@ -63,8 +64,35 @@ public class SaveScheduler
         }
     }
 
-    public void ResetSave()
+    public void ResetSave(GameState currentState)
     {
-        // optional delete
+        try
+        {
+            // Delete the save file
+            if (_storage.Exists(_key))
+            {
+                _storage.Delete(_key);
+                UnityEngine.Debug.Log($"Save file '{_key}' has been deleted.");
+            }
+
+            // Reset dirty flag
+            _dirty = false;
+
+            // If a current state is provided, reset its save timestamps
+            if (currentState != null)
+            {
+                currentState.lastManualSaveUnixMs = 0;
+                //currentState.lastAutosaveUnixMs = 0;
+            }
+
+            // Reset last autosave attempt
+            _lastAutosaveAttemptMs = 0;
+
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        }
+        catch (Exception e)
+        {
+            UnityEngine.Debug.LogError($"Failed to reset save: {e.Message}");
+        }
     }
 }

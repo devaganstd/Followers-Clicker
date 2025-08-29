@@ -8,6 +8,8 @@ public class GameEngine : MonoBehaviour
 
     [SerializeField] private GameState _state;
     private QuestManager _questManager;
+    [SerializeField]private ShopSystem _shopSystem;
+    private GameHUD gameHUD;
     private Economy _economy;
     private ProductionSystem _production;
     private SaveScheduler _saveScheduler;
@@ -35,7 +37,7 @@ public class GameEngine : MonoBehaviour
         _economy = new Economy();
         _production = new ProductionSystem();
         _saveScheduler = new SaveScheduler(_time, _serializer, _storage);
-
+        _shopSystem = new ShopSystem(_time, _questManager, _saveScheduler, _state);
         Bootstrap();
     }
 
@@ -47,19 +49,24 @@ public class GameEngine : MonoBehaviour
         {
             _state = new GameState();
             _state.followersPerClickCache = 1.0; // default 1 follower per click
-            _state.followersPerSecondCache = 1.0f; // default 1 follower per second
+            _state.followersPerSecondCache = 0; // default 0 follower per second
             _economy.EnsureStarterItems(_state);
             _questManager.EnsureInitialQuests(_state);
-            _economy.RecomputeDerived(_state);
+            _shopSystem.RecomputeDerivedValues(_state);
+            //_economy.RecomputeDerived(_state);
             _saveScheduler.MarkDirty();
+
         }
         else
         {
             _state = loaded;
-            _economy.RecomputeDerived(_state);
+            _shopSystem.RecomputeDerivedValues(_state);
+            //_economy.RecomputeDerived(_state);
         }
 
         //_questManager.EnsureInitialQuests(_state);
+        _shopSystem.InitializeShopItems(_state);
+        _shopSystem.RecomputeDerivedValues(_state);
 
         // Reset all active quests to have full duration on load
         long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
@@ -128,23 +135,41 @@ public class GameEngine : MonoBehaviour
         if (_questManager.Claim(_state, questId, out var reward))
         {
             _economy.GrantReward(_state, reward);
-            _economy.RecomputeDerived(_state);
+            //_economy.RecomputeDerived(_state);
+            _shopSystem.RecomputeDerivedValues(_state);
             _saveScheduler.MarkDirty();
             NotifyUI();
         }
     }
 
     // Attempt to purchase an item
-    public void Purchase(string itemId)
+    public void PurchaseItem(string itemId)
     {
+        if (_state == null) return;
+        var result = _shopSystem.TryPurchase(itemId, _state);
+
+        if (result.success)
+        {
+            Debug.Log($"Purchase successful: {result.message}");
+        }
+        else
+        {
+            Debug.Log($"Purchase failed: {result.message}");
+            // Show UI feedback for failed purchase
+        }
+        NotifyUI();
+
+
+        /*
         if (_economy.ApplyPurchase(_state, itemId))
         {
             _economy.RecomputeDerived(_state);
             _questManager.NotifyPurchase(_state, 1);
             _saveScheduler.MarkDirty();
             NotifyUI();
-        }
-    }
+        }*/
+
+}
     #endregion
 
     // Manually trigger a save
@@ -153,17 +178,27 @@ public class GameEngine : MonoBehaviour
         _saveScheduler.ManualSave(_state);
         NotifyUI();
     }
-
+    public void ManualLoad()
+    {
+        _saveScheduler.TryLoad();
+        NotifyUI();
+    }
     // Reset the game to initial state
     public void ResetGame()
     {
         _state = new GameState();
         _economy.EnsureStarterItems(_state);
         _questManager.EnsureInitialQuests(_state);
-        _economy.RecomputeDerived(_state);
+        //_economy.RecomputeDerived(_state);
+        _shopSystem.RecomputeDerivedValues(_state);
+        _saveScheduler.ResetSave(_state);
         _saveScheduler.MarkDirty();
         NotifyUI();
     }
 
     public GameState Snapshot() => _state;
+    public ShopSystem GetShopSystem()
+    {
+        return _shopSystem;
+    }
 }

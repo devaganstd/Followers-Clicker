@@ -5,8 +5,8 @@ using TMPro;
 
 public class QuestManager
 {
-    private const long questLifetimeMs = 10_000;      // 5 minutes
-    private const long expiredRetentionMs = 2_000;     // Keep expired quest visible for 3 seconds
+    private const long questLifetimeMs = 300_000;      // 5 minutes
+    private const long expiredRetentionMs = 2_000;     // Keep expired quest visible for 2 seconds
     private readonly IRandom _random;
     private readonly ITimeSource _time;
 
