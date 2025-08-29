@@ -11,6 +11,7 @@ public class GameState
     public int followersLifetime; // total followers earned over lifetime
     public int followersTotal; // current available followers
     public long clickCountLifetime;
+    public int worldLevel;
 
     [Header("Shop Items")]
     public List<ShopItemState> shopItems = new List<ShopItemState>();

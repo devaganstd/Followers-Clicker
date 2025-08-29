@@ -25,7 +25,8 @@ public class GameHUD : MonoBehaviour
     [Header("Shop Panel")]
     [SerializeField] private Transform shopItemParent;
     [SerializeField] private GameObject shopItemPrefab;
-
+    [Header("Cosmetics")]
+    [SerializeField] private FollowerProfileSetup followerProfileSetup;
 
     private ShopItemUI[] shopItemUIs;
 
@@ -43,7 +44,24 @@ public class GameHUD : MonoBehaviour
     {
         RefCurrency(state);
         RefQuest(state);
+        UpdateFollowerProfile(state);
         UpdateShopDisplay(state, gameEngine.GetShopSystem());
+    }
+
+    private void UpdateFollowerProfile(GameState state)
+    {
+        int current = state.followersLifetime;
+        int level = 1;
+
+        if(current <= 1000)
+            level = 1;
+        else if (current > 1000 && current <= 10000)
+            level = 2;
+        else if (current > 10000 && current <= 100000)
+            level = 3;
+        else
+            level = 4;
+        followerProfileSetup.SetupImage(level);
     }
 
     private void RefCurrency(GameState state)
